@@ -1,25 +1,14 @@
-/*
-   Copyright 2011 Lazar Laszlo (lazarsoft@gmail.com, www.lazarsoft.info)
-   
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
+(function(){
 
  var isUrl = function(s)
 {
     var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
     return regexp.test(s);
 }
-
+	
+	
+	
+	
 var decode_url = function (s)
 {
   var escaped = "";
@@ -199,63 +188,36 @@ var debugInfo=function(ctx){
    };
 	
 }
-qrcode = {};
 
 
-var maxImgSize = 1024*1024;
+// #include "grid.js"
+// #include "version.js"
+// #include "detector.js"
+// #include "formatinf.js"
+// #include "errorlevel.js"
+// #include "bitmat.js"
+// #include "datablock.js"
+// #include "bmparser.js"
+// #include "datamask.js"
+// #include "rsdecoder.js"
+// #include "gf256poly.js"
+// #include "gf256.js"
+// #include "decoder.js"
+// #include "findpat.js"
+// #include "alignpat.js"
+// #include "databr.js"
+	
 
-
-
-qrcode.callback = null;
-
-qrcode.decode = function(src){
-    
+window.QRCodeReader =function(e,options){
+ var ERROR_2="QRCODE_DECODING";
+ var ERROR_1="IMAGE_READING";
+ if (!options) options={};
  
-        var image = new Image();
-        image.crossOrigin = "Anonymous";
-        image.onload=function(){
-            //var canvas_qr = document.getElementById("qr-canvas");
-            var canvas_qr = document.createElement('canvas');
-            var context = canvas_qr.getContext('2d');
-            var nheight = image.height;
-            var nwidth = image.width;
-            if(image.width*image.height>maxImgSize)
-            {
-                var ir = image.width / image.height;
-                nheight = Math.sqrt(qrcode.maxImgSize/ir);
-                nwidth=ir*nheight;
-            }
 
-            canvas_qr.width = nwidth;
-            canvas_qr.height = nheight;
-            
-            context.drawImage(image, 0, 0, canvas_qr.width, canvas_qr.height );
-            qrcode.width = canvas_qr.width;
-            qrcode.height = canvas_qr.height;
-            try{
-                qrcode.imagedata = context.getImageData(0, 0, canvas_qr.width, canvas_qr.height);
-            }catch(e){
-                qrcode.result = "Cross domain image reading not supported in your browser! Save it to your computer then drag and drop the file!";
-                if(qrcode.callback!=null)
-                    qrcode.callback(qrcode.result);
-                return;
-            }
-            
-            try
-            {
-                qrcode.result = processImage(image,qrcode.callback);
-            }
-            catch(e)
-            {
-                console.log(e);
-                qrcode.result = "error decoding QR Code";
-            }
-            if(qrcode.callback!=null)
-                qrcode.callback(qrcode.result);
-        }
-        image.src = src;
-    
-}
+
+ var maxImgSize = options.maxImgSize||1024*1024;
+
+ var isCanvas=(function(){ var t=e.nodeName.toLowerCase();if (t=='canvas') return true; else if(t=='img' || t instanceof Image) return false; else throw "invalid argument"; })();
 
  var processImage=function(image,success,error){
             var canvas_qr = document.createElement('canvas');
@@ -282,19 +244,48 @@ qrcode.decode = function(src){
             } catch(e) {
 				error(ERROR_1);
 				 console.log(e);
+				 canvas_qr.remove();
 				return;
 		    }
 		    try{
-                var result = process(imagedata,width,height,null);
+                var result = process(imagedata,width,height,options.debug?debugInfo(context):null);
                 success(result);
+                canvas_qr.remove();
             }
             catch(e)
             {
-               
+                error(ERROR_2);
                  console.log(e);
+                 canvas_qr.remove();
             }
          
  }
+ 
+  var processCanvas=function(canvas_qr,success,error){
+          
+        var context = canvas_qr.getContext('2d');
+        var width = canvas_qr.width;
+        var height = canvas_qr.height;
+        var imagedata = context.getImageData(0, 0, width, height);
+        try {
+        var result = process(imagedata,width,height,options.debug?debugInfo(context):null);
+        success(result);
+	    }catch(e) {
+                error(ERROR_2);
+                console.log(e);
+         }
+      
+         
+ }
+ 
+ this.decode=function(){
+	 if (isCanvas) processCanvas(e,options.onSuccess||function(){},options.onError ||function(){});
+	 else {
+		 processImage(e,options.onSuccess||function(){},options.onError ||function(){});
+		
+	}
+ }
+        
 
 
 var process = function(imagedata,width,height,_debugInfo){
@@ -332,6 +323,18 @@ var process = function(imagedata,width,height,_debugInfo){
     return decode_utf8(str);
   
 }
+
+
+
+}
+
+
+ 
+
+
+
+})();
+
 
 
 
