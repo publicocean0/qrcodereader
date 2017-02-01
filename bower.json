@@ -2,7 +2,7 @@
   "name": "qrcodereader",
   "version": "0.0.1",
   "main": ["qrcodereader.js"],
-  
+  "forcePreprocessor":true,
   "ignore": [
     ".bowerrc",
     ".gitignore",
