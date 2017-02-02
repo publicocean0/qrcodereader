@@ -410,11 +410,11 @@ window.QRCodeReader =function(e,options){
 	 
  
  this.decode=function(suc,err){
-	decode(e,suc||options.onSuccess||function(){},err||options.onError ||function(){});
+	decode(e,suc||options.onDetected||function(){},err||options.onError ||function(){});
  }
  
 this.startScanner=function(onSuccess){
-	var callback=onSuccess||options.onSuccess||function(){};
+	var callback=onSuccess||options.onDetected||function(){};
 	var t=this;
 	if (!scanner){
 
