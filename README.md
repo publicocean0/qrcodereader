@@ -2,8 +2,9 @@
 It is a refactoring of another project : https://github.com/LazarSoft/jsqrcode
 
 <pre>
-var a =new QRcodeReader(document.getElementById('mycanvas'));//or var a =new QRcodeReader(document.getElementById('myimage'));
-a.decode(successcallback,errorcallback);
+var a =new QRCodeReader(document.getElementById('mycanvas'),{onSuccess:callback1,onError:calback2});//or var a =new QRCodeReader(document.getElementById('myimage'),{onSuccess:callback1,onError:calback2});
+a.decode();
+//no other objects are visible in window 
 </pre>
 
 
