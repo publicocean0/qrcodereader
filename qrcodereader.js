@@ -207,19 +207,25 @@ var debugInfo=function(ctx){
 // #include "alignpat.js"
 // #include "databr.js"
 	
-
+/*
+ * canvasCloning
+ * debug
+ * maxImgSize
+ * 
+ * */
 window.QRCodeReader =function(e,options){
  var ERROR_2="QRCODE_DECODING";
  var ERROR_1="IMAGE_READING";
  if (!options) options={};
- 
 
+
+ var render=null;
 
  var maxImgSize = options.maxImgSize||1024*1024;
+ var scanner=null;
+ var type=(function(){ var t=e.nodeName.toLowerCase();if (t=='canvas') return 1; else if(t=='img' || t instanceof Image) return 2; else if(t=='video') return 3; else throw "invalid argument"; })();
 
- var isCanvas=(function(){ var t=e.nodeName.toLowerCase();if (t=='canvas') return true; else if(t=='img' || t instanceof Image) return false; else throw "invalid argument"; })();
-
- var processImage=function(image,success,error){
+ var processImageVideo=function(image,success,error){
             var canvas_qr = document.createElement('canvas');
             var context = canvas_qr.getContext('2d');
             var nheight = image.height;
@@ -278,13 +284,155 @@ window.QRCodeReader =function(e,options){
          
  }
  
- this.decode=function(){
-	 if (isCanvas) processCanvas(e,options.onSuccess||function(){},options.onError ||function(){});
-	 else {
-		 processImage(e,options.onSuccess||function(){},options.onError ||function(){});
+   var  ScannerRender=function(canvas){
+	    var ctx = canvas.getContext('2d');
+        var scanning=false;
+        var H=1,step=2;
+        var down=true,y=0;
+        var renderer=window.requestAnimationFrame||window.mozRequestAnimationFrame    ||
+                window.webkitRequestAnimationFrame ||
+                window.msRequestAnimationFrame ||  window.oRequestAnimationFrame;    
+                
+                ;
+        var showLaser=function(){
+			if (!scanning) return;
+			ctx.beginPath();
+			ctx.clearRect(0, y, canvas.width, H);
+			if (down){
+			   y=y+step;
+			   if (y>=canvas.height){
+			   down=false;
+			   y-=2*step;
+			   }
+			}else {
+			   y=y-step;
+			    if (y<0){
+			   down=true;
+			   y+=step;
+			   }
+			}
+			ctx.beginPath();
+			ctx.fillStyle="green";
+			ctx.rect(0, y, canvas.width, H);
+			ctx.fill();	
+			
+			renderer(showLaser)
+			
+		}
+        this.stop=function(){
+			ctx.beginPath();
+			ctx.clearRect(0, y, canvas.width, H);
+		  scanning=false;y=0;
+		}
+	    this.start=function(){	
+			scanning=true;	
+			     showLaser();	
+	    }
+   } 
+ 
+   var Scanner=function(e,onSuccess,canvas){
+        var canvas_qr = document.createElement('canvas');
+        var context = canvas_qr.getContext('2d');
+        var timer=null;
+
+        e.crossOrigin = "Anonymous";
+        var ondebug=options.debug?debugInfo(context):null
+
+        this.destroy=function(){
+		  if (timer) clearTimeout(timer);
+		  if (render) render.stop();
+		  timer=null;
+		  canvas_qr.remove();	
+		}
+		this.start=function(){	
+		if (render) render.start();	
+		var scanner=function(){
+			capture(function(r){
+				 if (onSuccess(r)) timer=setTimeout(scanner,500);
+			},function(){
+				timer=setTimeout(scanner,500);
+			})
+		}
+	    scanner();
+	
+	
+	    }
+	
+
+       var capture=function(ons,one){
 		
-	}
+			var nheight = e.height;          
+            var nwidth = e.width;
+            if(e.width*e.height>maxImgSize)
+            {
+                var ir = e.width / e.height;
+                nheight = Math.sqrt(maxImgSize/ir);
+                nwidth=ir*nheight;
+            }
+
+            canvas_qr.width = nwidth;
+            canvas_qr.height = nheight;
+           
+            
+            context.drawImage(e, 0, 0, canvas_qr.width, canvas_qr.height );
+      
+            var imagedata;
+            try{
+                imagedata = context.getImageData(0, 0, canvas_qr.width, canvas_qr.height);
+            } catch(e) {
+				one(ERROR_1);
+				 console.log(e);
+				return;
+		    }
+		    try{
+                var result = process(imagedata,canvas_qr.width, canvas_qr.height,ondebug);
+                ons(result);
+             
+            }
+            catch(e)
+            {
+                one(ERROR_2);
+                 console.log(e);
+               
+            }
+		}
+        
+        
+       
+         
  }
+ 
+ var decode=(function(){
+	  if (type==1&&!options.canvasCloning) return processCanvas;
+	  else   return processImageVideo;
+	
+	})();
+	 
+ 
+ this.decode=function(suc,err){
+	decode(e,suc||options.onSuccess||function(){},err||options.onError ||function(){});
+ }
+ 
+this.startScanner=function(onSuccess){
+	var callback=onSuccess||options.onSuccess||function(){};
+	var t=this;
+	if (!scanner){
+
+		scanner=new Scanner(e,function(r){
+			callback(r);
+			if (options.autostop) { scanner.destroy();scanner=null; return false;}
+			return true;
+		});
+		scanner.start();
+	
+	}
+	
+} 
+
+this.stopScanner=function(){
+if (scanner) scanner.destroy();
+scanner=null;	
+} 
         
 
 
@@ -324,7 +472,23 @@ var process = function(imagedata,width,height,_debugInfo){
   
 }
 
-
+ if (options.outputCanvas) {
+	 var canvas=options.outputCanvas;
+	 var parent=canvas.parentNode;
+	 var div = document.createElement("div");
+	 div.setAttribute('style','display: block;position: relative');
+	 var style=(canvas.getAttribute('style')||'').trim();
+	 if (style.length>0) style+=';';
+     canvas.setAttribute("style",style+";position: absolute; left: 0; top: 0; z-index: 0;");
+	 parent.replaceChild(div,canvas);
+	 div.appendChild(canvas);
+     var canvasLayer=document.createElement('canvas');
+     canvasLayer.width=canvas.width;
+     canvasLayer.height=canvas.height;
+     canvasLayer.setAttribute("style","position: absolute; left: 0; top: 0; z-index: 1;");
+     div.appendChild(canvasLayer);
+	 render=new ScannerRender(canvasLayer);
+ }
 
 }
 
