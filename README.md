@@ -3,7 +3,7 @@ It is a refactoring of another project : https://github.com/LazarSoft/jsqrcode
 
 <pre>
 var a =new QRCodeReader(document.getElementById('mycanvas'||'myimage'||'myvideo'),{
-onSuccess:callback1,
+onDetected:callback1,
 onError:calback2
 autostop:true,
 outputCanvas:canvas // canvas where you show laser
