@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "main": ["qrcodereader.js"],
   "default":{
-    enablePreprocessor:true
+    "enablePreprocessor":true
   },
   "ignore": [
     ".bowerrc",
