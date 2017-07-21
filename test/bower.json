@@ -1,0 +1,21 @@
+{
+  "name": "test",
+  "version": "0.0.1",
+    "private": true,
+ 
+  "ignore": [
+    ".bowerrc",
+    ".gitignore",
+    ".jshintignore",
+    ".jshintrc",
+    "bower.json",
+    "gruntfile.js",
+    "package.json",
+    "README.md"
+  ],
+   "dependencies": {
+    "jquery": "2.0.0",
+    "qrcodereader":"0.0.1"
+    }
+  
+}

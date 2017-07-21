@@ -1,0 +1,13 @@
+{
+  "name": "test",
+  "version": "0.0.1",
+
+ 
+ 
+  "dependencies": {
+    "bindep": "^1.0.28",
+    "exec":"^0.2.1",
+    "grunt":"^1.0.1"
+  }
+ 
+}
