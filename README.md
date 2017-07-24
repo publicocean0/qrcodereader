@@ -15,7 +15,7 @@ a.stopScanner();
 </pre>
 
  
-Use  <a href="https://github.com/publicocean0/bindep">bindep</a> tool for generating the code;
+Use  <a href="https://github.com/publicocean0/bindep">bindep</a> tool for generating the code in your page;
 
 npm install bindep
 
