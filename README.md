@@ -14,8 +14,8 @@ a.stopScanner();
 //no other objects are visible in window 
 </pre>
 
-
-Use bower & bindep tool for generating the code;
+ 
+Use  <a href="https://github.com/publicocean0/bindep">bindep</a> tool for generating the code;
 
 npm install bindep
 
